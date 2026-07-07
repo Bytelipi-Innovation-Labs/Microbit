@@ -1,0 +1,82 @@
+radio.setGroup(1)
+let lastSignalTime = 0
+let robotState = "DISCONNECTED"
+
+function stopMotors() {
+    pins.digitalWritePin(DigitalPin.P12, 0)
+    pins.digitalWritePin(DigitalPin.P13, 0)
+    pins.digitalWritePin(DigitalPin.P14, 0)
+    pins.digitalWritePin(DigitalPin.P15, 0)
+}
+
+stopMotors()
+
+radio.onReceivedString(function (receivedString) {
+    lastSignalTime = input.runningTime()
+
+    // Respond back immediately to confirm handshake link
+    radio.sendString("ROBOT_OK")
+
+    if (receivedString == "PING") {
+        robotState = "CONNECTED"
+        stopMotors()
+    }
+    else if (receivedString == "STOP") {
+        robotState = "CONNECTED"
+        stopMotors()
+    }
+    else if (receivedString == "UP") {
+        robotState = "ACTIVE"
+        pins.digitalWritePin(DigitalPin.P12, 1)
+        pins.digitalWritePin(DigitalPin.P13, 0)
+        pins.digitalWritePin(DigitalPin.P15, 1)
+        pins.digitalWritePin(DigitalPin.P14, 0)
+    }
+    else if (receivedString == "DOWN") {
+        robotState = "ACTIVE"
+        pins.digitalWritePin(DigitalPin.P12, 0)
+        pins.digitalWritePin(DigitalPin.P13, 1)
+        pins.digitalWritePin(DigitalPin.P14, 1)
+        pins.digitalWritePin(DigitalPin.P15, 0)
+    }
+    else if (receivedString == "RIGHT") {
+        robotState = "ACTIVE"
+        pins.digitalWritePin(DigitalPin.P12, 0)
+        pins.digitalWritePin(DigitalPin.P13, 1)
+        pins.digitalWritePin(DigitalPin.P14, 0)
+        pins.digitalWritePin(DigitalPin.P15, 1)
+    }
+    else if (receivedString == "LEFT") {
+        robotState = "ACTIVE"
+        pins.digitalWritePin(DigitalPin.P12, 1)
+        pins.digitalWritePin(DigitalPin.P13, 0)
+        pins.digitalWritePin(DigitalPin.P14, 1)
+        pins.digitalWritePin(DigitalPin.P15, 0)
+    }
+})
+
+// SAFETY WATCHDOG & SCREEN MANAGEMENT
+basic.forever(function () {
+    // If no signal for 600ms, mark as disconnected
+    if (input.runningTime() - lastSignalTime > 600) {
+        stopMotors()
+        robotState = "DISCONNECTED"
+    }
+
+    // Dynamic Display Handler
+    if (robotState == "DISCONNECTED") {
+        // NOT CONNECTED: Show exactly one middle long dash "---"
+        basic.showLeds(`
+            . . . . .
+            . . . . .
+            # # # # #
+            . . . . .
+            . . . . .
+            `, 0)
+    } else if (robotState == "CONNECTED") {
+        basic.showIcon(IconNames.Square, 0) // Shows Square
+    } else if (robotState == "ACTIVE") {
+        basic.showIcon(IconNames.Diamond, 0) // Shows Diamond
+    }
+    basic.pause(50)
+})
