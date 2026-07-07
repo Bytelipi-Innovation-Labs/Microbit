@@ -1,0 +1,26 @@
+let distance = 0
+basic.forever(function () {
+    // Read distance from the Ultrasonic Sensor
+    distance = sonar.ping(
+    DigitalPin.P3,
+    DigitalPin.P8,
+    PingUnit.Centimeters
+    )
+    // Check if an object is within 15cm (ignoring 0 error readings)
+    if (distance > 0 && distance <= 15) {
+        //  START: Turn on the pins controlling the motor
+        pins.digitalWritePin(DigitalPin.P14, 1)
+        // Sets direction for the motor to spin
+        pins.digitalWritePin(DigitalPin.P15, 0)
+        // Show a spinning/active animation on the screen
+        basic.showIcon(IconNames.Target)
+    } else {
+        // STOP: Turn off both pins to stop the motor
+        pins.digitalWritePin(DigitalPin.P14, 0)
+        pins.digitalWritePin(DigitalPin.P15, 0)
+        // Show a flat line or 'Happy' face when resting
+        basic.showIcon(IconNames.Asleep)
+    }
+    // Small delay to let the sensor stabilize
+    basic.pause(100)
+})
