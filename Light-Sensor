@@ -1,0 +1,16 @@
+basic.forever(function () {
+    // Read the built-in light level (0 is pitch black, 255 is very bright)
+    if (input.lightLevel() < 100) {
+        // It's dark: Move both motors forward
+        pins.digitalWritePin(DigitalPin.P12, 1)
+        pins.digitalWritePin(DigitalPin.P13, 0)
+        pins.digitalWritePin(DigitalPin.P14, 1)
+        pins.digitalWritePin(DigitalPin.P15, 0)
+    } else {
+        // It's bright: Stop both motors
+        pins.digitalWritePin(DigitalPin.P12, 0)
+        pins.digitalWritePin(DigitalPin.P13, 0)
+        pins.digitalWritePin(DigitalPin.P14, 0)
+        pins.digitalWritePin(DigitalPin.P15, 0)
+    }
+})
