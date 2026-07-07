@@ -1,0 +1,89 @@
+// Listen for the robot's pairing confirmation
+radio.onReceivedString(function (receivedString) {
+    if (receivedString == "ROBOT_OK") {
+        lastRobotPing = input.runningTime()
+        isConnected = true
+    }
+})
+let nextCommand = ""
+let lastTransmission = 0
+let isActive = false
+let touchStart = 0
+let logoWasPressed = false
+let isConnected = false
+let lastRobotPing = 0
+radio.setGroup(1)
+basic.forever(function () {
+    // 1. Long Press Gold Logo Detection (1 second)
+    if (input.logoIsPressed()) {
+        if (!(logoWasPressed)) {
+            touchStart = input.runningTime()
+            logoWasPressed = true
+        } else if (input.runningTime() - touchStart >= 1000) {
+            if (isConnected) {
+                isActive = !(isActive)
+            }
+            logoWasPressed = false
+            basic.clearScreen()
+            basic.pause(300)
+        }
+    } else {
+        logoWasPressed = false
+    }
+    // 2. Connection Check (Timeout if robot is silent for 1 second)
+    if (input.runningTime() - lastRobotPing > 1000) {
+        isConnected = false
+        isActive = false
+    }
+    // 3. Status Display & Data Sending
+    if (!(isConnected)) {
+        basic.showLeds(`
+            . . . . .
+            . . . . .
+            # # # # #
+            . . . . .
+            . . . . .
+            `, 0)
+// Ping the robot to look for it
+        if (input.runningTime() - lastTransmission > 200) {
+            radio.sendString("PING")
+            lastTransmission = input.runningTime()
+        }
+    } else if (isConnected && !(isActive)) {
+        basic.showIcon(IconNames.Square, 0)
+if (input.runningTime() - lastTransmission > 100) {
+            radio.sendString("STOP")
+            lastTransmission = input.runningTime()
+        }
+    } else if (isConnected && isActive) {
+        // ACTIVE DRIVING MODE
+        nextCommand = "STOP"
+        if (input.buttonIsPressed(Button.AB)) {
+            nextCommand = "STOP"
+        } else if (input.rotation(Rotation.Pitch) < -22) {
+            nextCommand = "UP"
+        } else if (input.rotation(Rotation.Pitch) > 22) {
+            nextCommand = "DOWN"
+        } else if (input.rotation(Rotation.Roll) > 22) {
+            nextCommand = "RIGHT"
+        } else if (input.rotation(Rotation.Roll) < -22) {
+            nextCommand = "LEFT"
+        } else {
+            nextCommand = "STOP"
+        }
+        radio.sendString(nextCommand)
+        // Show Direction Arrows or Diamond
+        if (nextCommand == "UP") {
+            basic.showLeds(`. . # . .\n. # # # .\n# . # . #\n. . # . .\n. . # . .`, 0)
+        } else if (nextCommand == "DOWN") {
+            basic.showLeds(`. . # . .\n. . # . .\n# . # . #\n. # # # .\n. . # . .`, 0)
+        } else if (nextCommand == "RIGHT") {
+            basic.showLeds(`. . # . .\n. . . # .\n# # # # #\n. . . # .\n. . # . .`, 0)
+        } else if (nextCommand == "LEFT") {
+            basic.showLeds(`. . # . .\n. # . . .\n# # # # #\n. # . . .\n. . # . .`, 0)
+        } else {
+            basic.showIcon(IconNames.Diamond, 0)
+        }
+    }
+    basic.pause(30)
+})
