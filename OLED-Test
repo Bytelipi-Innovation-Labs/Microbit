@@ -1,0 +1,18 @@
+// 1. Setup the screen first
+OLED.init(128, 64)
+
+basic.forever(function () {
+    OLED.clear()
+
+    // Prints text and jumps to the next line
+    OLED.writeStringNewLine("--- SENSORS ---")
+
+    // You can print variables or text side-by-side
+    OLED.writeString("Temp: ")
+    OLED.writeStringNewLine("" + input.temperature())
+
+    OLED.writeString("Light: ")
+    OLED.writeStringNewLine("" + input.lightLevel())
+
+    basic.pause(2000) // Refresh every 2 seconds
+})
