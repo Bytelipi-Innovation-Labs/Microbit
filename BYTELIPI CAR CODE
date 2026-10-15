@@ -1,0 +1,111 @@
+function moveForward () {
+    pins.digitalWritePin(DigitalPin.P12, 1)
+    pins.digitalWritePin(DigitalPin.P13, 0)
+    pins.digitalWritePin(DigitalPin.P15, 1)
+    pins.digitalWritePin(DigitalPin.P14, 0)
+    basic.showArrow(ArrowNames.North)
+}
+function turnLeft () {
+    pins.digitalWritePin(DigitalPin.P12, 1)
+    pins.digitalWritePin(DigitalPin.P13, 0)
+    pins.digitalWritePin(DigitalPin.P14, 1)
+    pins.digitalWritePin(DigitalPin.P15, 0)
+    basic.showArrow(ArrowNames.West)
+}
+// Ultrasonic Sensor Reading (Trig: P3, Echo: P8)
+function getDistance () {
+    pins.digitalWritePin(DigitalPin.P3, 0)
+    control.waitMicros(2)
+    pins.digitalWritePin(DigitalPin.P3, 1)
+    control.waitMicros(10)
+    pins.digitalWritePin(DigitalPin.P3, 0)
+    let duration = pins.pulseIn(DigitalPin.P8, PulseValue.High, 25000)
+return Math.round(duration / 58)
+}
+// Motor Control Functions using your working test configuration (Pins P12-P15)
+function stopMotors () {
+    pins.digitalWritePin(DigitalPin.P12, 0)
+    pins.digitalWritePin(DigitalPin.P13, 0)
+    pins.digitalWritePin(DigitalPin.P14, 0)
+    pins.digitalWritePin(DigitalPin.P15, 0)
+    basic.showIcon(IconNames.Square)
+}
+function turnRight () {
+    pins.digitalWritePin(DigitalPin.P12, 0)
+    pins.digitalWritePin(DigitalPin.P13, 1)
+    pins.digitalWritePin(DigitalPin.P14, 0)
+    pins.digitalWritePin(DigitalPin.P15, 1)
+    basic.showArrow(ArrowNames.East)
+}
+// Listen to incoming commands from the controller
+radio.onReceivedValue(function (name, value) {
+    if (name == "UP") {
+        runSteps("UP", value)
+    } else if (name == "DOWN") {
+        runSteps("DOWN", value)
+    } else if (name == "RIGHT") {
+        runSteps("RIGHT", value)
+    } else if (name == "LEFT") {
+        runSteps("LEFT", value)
+    } else if (name == "STOP") {
+        stopMotors()
+        isMoving = false
+        radio.sendValue("STATUS", 1)
+    } else if (name == "SERVO_4") {
+        pins.servoWritePin(AnalogPin.P4, value)
+    } else if (name == "SERVO_6") {
+        pins.servoWritePin(AnalogPin.P6, value)
+    } else if (name == "SERVO_10") {
+        pins.servoWritePin(AnalogPin.P10, value)
+    } else if (name == "SERVO_16") {
+        pins.servoWritePin(AnalogPin.P16, value)
+    }
+})
+function runSteps (direction: string, steps: number) {
+    if (steps > 50) {
+        steps = 50
+    }
+    isMoving = true
+    if (direction == "UP") {
+        moveForward()
+    } else if (direction == "DOWN") {
+        moveBackward()
+    } else if (direction == "LEFT") {
+        turnLeft()
+    } else if (direction == "RIGHT") {
+        turnRight()
+    }
+    // Run steps for full duration while streaming live telemetry back
+    for (let index = 0; index < steps; index++) {
+        dist = getDistance()
+        radio.sendValue("DIST", dist)
+        basic.pause(200)
+    }
+    stopMotors()
+    isMoving = false
+    radio.sendValue("STATUS", 1)
+}
+function moveBackward () {
+    pins.digitalWritePin(DigitalPin.P12, 0)
+    pins.digitalWritePin(DigitalPin.P13, 1)
+    pins.digitalWritePin(DigitalPin.P14, 1)
+    pins.digitalWritePin(DigitalPin.P15, 0)
+    basic.showArrow(ArrowNames.South)
+}
+let dist2 = 0
+let dist = 0
+let steps = 0
+let isMoving = false
+// Setup configuration
+radio.setGroup(255)
+radio.setTransmitPower(7)
+stopMotors()
+basic.showIcon(IconNames.Square)
+// Continuously broadcast distance back to controller OLED when idle
+basic.forever(function () {
+    if (!(isMoving)) {
+        dist2 = getDistance()
+        radio.sendValue("DIST", dist2)
+    }
+    basic.pause(500)
+})
