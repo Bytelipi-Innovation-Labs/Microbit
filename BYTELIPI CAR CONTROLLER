@@ -1,0 +1,84 @@
+function SERVO_16 (num: number) {
+    radio.sendValue("SERVO_16", num)
+}
+function UP (num: number) {
+    // Safe to move 10 step (20 cm)
+    radio.sendValue("UP", num)
+}
+function DOWN (num: number) {
+    // Safe to move 10 step (20 cm)
+    radio.sendValue("DOWN", num)
+}
+function LEFT (num: number) {
+    // Safe to move 10 step (20 cm)
+    radio.sendValue("LEFT", num)
+}
+function SERVO_6 (num: number) {
+    radio.sendValue("SERVO_6", num)
+}
+// Press A: Check live distance before sending movement command
+input.onButtonPressed(Button.A, function () {
+    // Check if an obstacle is too close based on the last known telemetry
+    if (currentDistance < obstacleThreshold && currentDistance > 0) {
+        robotStatus = "BLOCKED! CANNOT MOVE"
+        updateOLED()
+    } else {
+        robotStatus = "MOVING UP"
+        updateOLED()
+        UP(10)
+    }
+})
+function STOP () {
+    // Safe to move 10 step (20 cm)
+    radio.sendValue("STOP", 0)
+}
+function RIGHT (num: number) {
+    // Safe to move 10 step (20 cm)
+    radio.sendValue("RIGHT", num)
+}
+// Clean and organized OLED dashboard layout
+function updateOLED () {
+    OLED.clear()
+    OLED.writeString("  === ROBOT HUB ===  ")
+    OLED.writeString("  STAT: ")
+    OLED.writeString("" + robotStatus + "  ")
+    OLED.writeString("      \n-------------------\n")
+    OLED.writeString("  DIST: ")
+    OLED.writeNum(currentDistance)
+    OLED.writeString(" cm         ")
+    OLED.writeString(" LIMIT: ")
+    OLED.writeNum(obstacleThreshold)
+    OLED.writeString(" cm")
+}
+function SERVO_4 (num: number) {
+    radio.sendValue("SERVO_4", num)
+}
+function SERVO_10 (num: number) {
+    radio.sendValue("SERVO_10", num)
+}
+// Press B: Emergency Stop All
+input.onButtonPressed(Button.B, function () {
+    radio.sendValue("STOP", 0)
+    robotStatus = "STOPPED!"
+    updateOLED()
+})
+// Receive live telemetry from the robot car
+radio.onReceivedValue(function (name, value) {
+    if (name == "DIST") {
+        currentDistance = value
+    } else if (name == "STATUS") {
+        robotStatus = (value == 1) ? "ACTIVE / OK" : "OBSTACLE STOP!"
+    }
+    updateOLED()
+})
+let currentDistance = 0
+let obstacleThreshold = 0
+let robotStatus = ""
+robotStatus = "READY"
+// Safety distance limit in cm
+obstacleThreshold = 15
+// Initialize OLED screen
+OLED.init(128, 64)
+radio.setGroup(255)
+radio.setTransmitPower(7)
+updateOLED()
